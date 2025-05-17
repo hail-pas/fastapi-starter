@@ -1,0 +1,13 @@
+from ext.ext_oss.main import OssConfig
+from ext.ext_redis.main import RedisConfig
+from ext.ext_tortoise.main import TortoiseConfig
+from pydantic import BaseModel
+
+class ExtensionRegistry(BaseModel):
+    """
+    define here
+    """
+    redis: RedisConfig
+    oss: OssConfig
+    relation: TortoiseConfig
+
