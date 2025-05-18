@@ -1,12 +1,12 @@
 [project]
 name = "fastapi-starter"
 description = "FastApi Start Kit"
-authors  = [
+authors = [
     { name = "phoenix", email = "hypofiasco@gmail.co" },
 ]
 requires-python = ">=3.11.0"
 version = "0.1.0"
-dependencies=[
+dependencies = [
     "fastapi==0.115.12",
     "python-multipart==0.0.20",
     "starlette-context==0.4.0",
@@ -15,7 +15,7 @@ dependencies=[
     "httpx==0.28.1",
     "pycryptodomex==3.22.0",
     "passlib==1.7.4",
-    "bcrypt==4.0.1",  # fixed for passlib, the newer version will raise AttributeError: module 'bcrypt' has no attribute '__about__'
+    "bcrypt==4.0.1",
     "gunicorn==23.0.0",
     "uvicorn[standard]==0.34.0",
     "tortoise-orm[aiomysql]==0.25.0",
@@ -27,38 +27,39 @@ dependencies=[
     "python-ulid==3.0.0",
     "captcha==0.6.0",
     "pyinstrument==5.0.0",
-    # "logfire[fastapi]==3.14.0",
-    # "pydantic-ai-slim[openai]==0.1.3",
 ]
 
-
 [project.optional-dependencies]
-ali-oss = [ "oss2==2.19.1" ]
-ipython = [ "ipython==8.15.0" ]
-sentry-sdk = [ "sentry-sdk[fastapi]==2.26.0" ]
+ali-oss = [
+    "oss2==2.19.1",
+]
+ipython = [
+    "ipython==8.15.0",
+]
+sentry-sdk = [
+    "sentry-sdk[fastapi]==2.26.0",
+]
 
 [dependency-groups]
 dev = [
-  "pytest",
-  "pytest-asyncio",
-  "black",
-  "isort",
-  "ruff",
-  "freezegun",
-  "httpretty",
-  "factory-boy",
-  "hypothesis",
-  "mimesis",
-  "mypy",
+    "pytest",
+    "pytest-asyncio",
+    "black",
+    "isort",
+    "ruff",
+    "freezegun",
+    "httpretty",
+    "factory-boy",
+    "hypothesis",
+    "mimesis",
+    "mypy",
 ]
-
 
 [tool.isort]
 atomic = true
 profile = "black"
 use_parentheses = true
 ensure_newline_before_comments = true
-
 
 [tool.black]
 line-length = 118
@@ -174,8 +175,6 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
-    "common/tortoise/contrib",
-    "storages/relational/migrate/",
     "tests",
 ]
 line-length = 120
@@ -198,8 +197,6 @@ warn_unused_configs = true
 exclude = [
     "static",
     "tests",
-    "common/tortoise/contrib",
-    "storages/relational/migrate/",
 ]
 follow_imports = "silent"
 warn_redundant_casts = true
@@ -214,7 +211,6 @@ init_typed = true
 warn_required_dynamic_aliases = true
 
 [tool.aerich]
-tortoise_orm = "storages.relational.migrate.env.TORTOISE_ORM_CONFIG"
-location = "storages/relational/migrate"
+tortoise_orm = "ext.ext_tortoise.migrate.env.TORTOISE_ORM_CONFIG"
+location = "ext/ext_tortoise/migrate"
 src_folder = "./."
-

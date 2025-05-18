@@ -1,6 +1,6 @@
 import sys
 import threading
-from typing import TypeVar, ParamSpec
+from typing import TypeVar, ParamSpec, Concatenate
 from functools import wraps
 from collections.abc import Callable
 
@@ -8,25 +8,24 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 
-def singleton(key_generator: Callable[P, str] | None = None):
-    def deco(cls):
+def singleton(key_generator: Callable[P, str] | None = None):  # type: ignore
+    def deco(cls):  # type: ignore
         instances = {}
 
-        def get_instance(*args, **kwargs):
-            key = key_generator(*args, **kwargs) if key_generator else cls
+        def get_instance(*args, **kwargs):  # type: ignore
+            key = key_generator(*args, **kwargs) if key_generator else cls  # type: ignore
             if key not in instances:
                 instances[key] = cls(*args, **kwargs)
-            return instances[key]
+            return instances[key]  # type: ignore
 
-        return get_instance
+        return get_instance  # type: ignore
 
-    return deco
-
+    return deco  # type: ignore
 
 
 def time_limit(
     timeout: int | float,
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
+) -> Callable[[Callable[Concatenate[P], T]], Callable[Concatenate[P], T]]:
     """A decorator to limit a function to `timeout` seconds, raising `TimeoutError`
     if it takes longer.
         >>> import time
@@ -45,7 +44,7 @@ def time_limit(
     inspired by <http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473878>.
     """
 
-    def _1(function: Callable[P, T]) -> Callable[P, T | None]:
+    def _1(function: Callable[Concatenate[P], T]) -> Callable[Concatenate[P], T | None]:
         @wraps(function)
         def _2(*args: P.args, **kw: P.kwargs) -> T | None:
             class Dispatch(threading.Thread):
@@ -74,4 +73,3 @@ def time_limit(
         return _2
 
     return _1  # type: ignore
-

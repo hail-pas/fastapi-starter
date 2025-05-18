@@ -9,7 +9,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "apis.entrypoint.factory:service_api",
+                "entrypoint.factory:service_api",
                 "--reload",
                 "--host",
                 "0.0.0.0",
@@ -25,7 +25,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "apis.user_center.factory:user_center_api",
+                "api.user_center.factory:user_center_api",
                 "--reload",
                 "--host",
                 "0.0.0.0",
@@ -36,12 +36,12 @@
             "justMyCode": false
         },
         {
-            "name": "knowledgeBaseCenter",
+            "name": "second",
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "apis.knowledge_base.factory:knowledge_base_api",
+                "api.second.factory:second_api",
                 "--reload",
                 "--host",
                 "0.0.0.0",

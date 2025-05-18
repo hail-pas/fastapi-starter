@@ -1,9 +1,19 @@
+import atexit
 import pdb  # noqa
 import cProfile
 import importlib
 
 from IPython import start_ipython
 from traitlets.config import Config
+
+
+def sync_clear_ctx():
+    import asyncio
+    from util.ctx import clear_ctx
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(clear_ctx())
+
+atexit.register(sync_clear_ctx)
 
 if __name__ == "__main__":
 
@@ -20,7 +30,7 @@ if __name__ == "__main__":
     conf = Config()
     conf.InteractiveShellApp.exec_lines = [
         "print('System Ready!')",
-        "from common.init_ctx import init_ctx",
+        "from util.ctx import init_ctx",
         "await init_ctx()",
     ]
     # DEBUG=10, INFO=20, WARN=30

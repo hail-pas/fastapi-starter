@@ -1,12 +1,24 @@
 import abc
-import posixpath
 import time
 import random
+import posixpath
 
 from util.general import generate_random_string
 
 
 class OssBase(abc.ABC):
+
+    @abc.abstractmethod
+    def __init__(
+        self,
+        access_key_id: str,
+        access_key_secret: str,
+        endpoint: str,
+        external_endpoint: str,
+        bucket_name: str,
+        cname: bool,
+        expire_time: int,
+    ) -> None: ...
 
     def get_real_path(
         self,
@@ -110,7 +122,7 @@ class OssBase(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def list_keys(self, prefix: str, max_keys=1000) -> list[str]:
+    def list_keys(self, prefix: str, max_keys: int = 1000) -> list[str]:
         raise NotImplementedError
 
 

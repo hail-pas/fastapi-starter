@@ -5,12 +5,12 @@ from collections.abc import Iterable
 from obs import ObsClient
 from obs.client import BucketClient
 
-from ext.ext_oss.provider.base import OssBase, clean_path, normalize_url
 from util.decorator import singleton
+from ext.ext_oss.provider.base import OssBase, clean_path, normalize_url
 
 
 @singleton(
-    key_generator=lambda **kwargs: f"{kwargs.get('endpoint', '')}:{kwargs.get('bucket_name', '')}:{kwargs.get('access_key_id', '')}"
+    key_generator=lambda **kwargs: f"{kwargs.get('endpoint', '')}:{kwargs.get('bucket_name', '')}:{kwargs.get('access_key_id', '')}",
 )
 class HuaweiyunOss(
     OssBase,

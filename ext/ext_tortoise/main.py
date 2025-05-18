@@ -1,8 +1,15 @@
 import enum
+import datetime
+from typing import override
+from zoneinfo import ZoneInfo
 from urllib.parse import unquote
-from config.default import RegisterExtensionConfig
+
+from fastapi import FastAPI
 from pydantic import MySQLDsn
 from tortoise import Tortoise
+
+from config.default import RegisterExtensionConfig
+
 
 class ConnectionNameEnum(str, enum.Enum):
     """数据库连接名称"""
@@ -11,6 +18,7 @@ class ConnectionNameEnum(str, enum.Enum):
     user_center = "user_center"  # "用户中心连接"
     second = "second"
 
+
 class TortoiseConfig(RegisterExtensionConfig):
     user_center: MySQLDsn
     second: MySQLDsn
@@ -18,6 +26,12 @@ class TortoiseConfig(RegisterExtensionConfig):
     echo: bool = False
 
     # model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    @property
+    def datetime_now(self) -> datetime.datetime:
+        return datetime.datetime.now(
+            tz=ZoneInfo(self.timezone),
+        )
 
     def to_dict(self) -> dict:
         return {
@@ -59,13 +73,13 @@ class TortoiseConfig(RegisterExtensionConfig):
                 ConnectionNameEnum.user_center.value: {
                     "models": [
                         "aerich.models",
-                        "storages.relational.models.user_center",
+                        "ext.ext_tortoise.models.user_center",
                     ],
                     "default_connection": ConnectionNameEnum.user_center.value,
                 },
                 ConnectionNameEnum.second.value: {
                     "models": [
-                        "storages.relational.models.second",
+                        "ext.ext_tortoise.models.second",
                     ],
                     "default_connection": ConnectionNameEnum.second.value,
                 },
@@ -75,6 +89,23 @@ class TortoiseConfig(RegisterExtensionConfig):
             # 'routers': ['path.router1', 'path.router2'],
         }
 
+    @override
+    async def register(self) -> None:
+        Tortoise.init_models(
+            [
+                "ext.ext_tortoise.models.user_center",
+            ],
+            ConnectionNameEnum.user_center.value,
+        )
 
-    def register(self, **kwargs):
-        Tortoise.init(config=self.to_dict())
+        Tortoise.init_models(
+            [
+                "ext.ext_tortoise.models.second",
+            ],
+            ConnectionNameEnum.second.value,
+        )
+        await Tortoise.init(config=self.to_dict())
+
+    @override
+    async def unregister(self) -> None:
+        await Tortoise.close_connections()

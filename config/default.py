@@ -1,14 +1,14 @@
-import abc
 import os
+import abc
 import enum
 import multiprocessing
 from typing import Self, Generic, TypeVar
 from pathlib import Path
-from fastapi import FastAPI
 
 from pydantic import HttpUrl, BaseModel, model_validator
 
 T = TypeVar("T")
+
 
 class EnvironmentEnum(str, enum.Enum):
     local = "local"
@@ -45,8 +45,12 @@ class ServerConfig(BaseModel):
                 "Access-Control-Allow-Credentials": str(
                     self.allow_credentials,
                 ).lower(),
-                "Access-Control-Expose-Headers": ",".join(self.allow_headers) if "*" not in self.allow_headers else "*",
-                "Access-Control-Allow-Methods": ",".join(self.allow_methods) if "*" not in self.allow_methods else "*",
+                "Access-Control-Expose-Headers": (
+                    ",".join(self.allow_headers) if "*" not in self.allow_headers else "*"
+                ),
+                "Access-Control-Allow-Methods": (
+                    ",".join(self.allow_methods) if "*" not in self.allow_methods else "*"
+                ),
             }
             if self.expose_headers:
                 header["Access-Control-Expose-Headers"] = ", ".join(
@@ -64,6 +68,7 @@ class ServerConfig(BaseModel):
     docs_uri: str = "/docs"
     redoc_uri: str = "/redoc"
     openapi_uri: str = "/openapi.json"
+    token_expire_seconds: int = 3600 * 24
 
     class SwaggerServerConfig(BaseModel):
         url: HttpUrl
@@ -78,6 +83,12 @@ class ProjectConfig(BaseModel):
     environment: EnvironmentEnum = EnvironmentEnum.production
     sentry_dsn: HttpUrl | None = None
 
+    class SwaggerServerConfig(BaseModel):
+        url: HttpUrl
+        description: str
+
+    swagger_servers: list[SwaggerServerConfig] = []
+
     @model_validator(mode="after")
     def check_debug_options(self) -> Self:
         assert not (
@@ -90,19 +101,20 @@ class ProjectConfig(BaseModel):
         return BASE_DIR
 
 
-class ExtensionConfig(BaseModel):
-    ...
+class ExtensionConfig(BaseModel): ...
 
 
 class InstanceExtensionConfig(ExtensionConfig, Generic[T]):
 
+    @property
     @abc.abstractmethod
-    def instance(self, **kwargs) -> T:
-        ...
+    def instance(self) -> T: ...
 
 
-class RegisterExtensionConfig(ExtensionConfig, Generic[T]):
+class RegisterExtensionConfig(ExtensionConfig):
 
     @abc.abstractmethod
-    def register(self, **kwargs) -> T:
-        ...
+    async def register(self) -> None: ...
+
+    @abc.abstractmethod
+    async def unregister(self) -> None: ...
