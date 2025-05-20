@@ -3,7 +3,6 @@ from collections.abc import Callable
 
 from fastapi import FastAPI
 from starlette.routing import Mount, Route, WebSocketRoute
-from starlette.requests import Request
 
 
 def gte_all_uris(

@@ -14,6 +14,7 @@ from core.logger import LogLevelEnum, setup_loguru
 from core.response import AesResponse
 from config.default import RegisterExtensionConfig
 from enhance.monkey_patch import patch
+from util.ctx import clear_ctx, init_ctx
 
 
 class ApiApplication(FastAPI):
@@ -97,12 +98,8 @@ class ApiApplication(FastAPI):
 
 @asynccontextmanager
 async def lifespan(api: ApiApplication) -> AsyncGenerator:
-    for _, ext_conf in api.settings.extensions:  # type: ignore
-        if isinstance(ext_conf, RegisterExtensionConfig):
-            await ext_conf.register()
+    await init_ctx()
 
     yield
 
-    for _, ext_conf in api.settings.extensions:  # type: ignore
-        if isinstance(ext_conf, RegisterExtensionConfig):
-            await ext_conf.unregister()
+    await clear_ctx()

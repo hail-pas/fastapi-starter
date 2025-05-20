@@ -14,6 +14,9 @@
         "jsonable",
         "levelname",
         "levelno",
+        "ondelete",
+        "sessionmaker",
+        "sqlmodel",
         "trustedhost"
     ]
 }
