@@ -1,10 +1,11 @@
 import asyncio
-from sqlmodel import Field, Relationship, SQLModel, select
-from config.main import local_configs
-from util.ctx import ctx
-from sqlalchemy.util import greenlet_spawn
-from sqlalchemy.orm import selectinload
 
+from sqlmodel import Field, SQLModel, Relationship, select
+from sqlalchemy.orm import selectinload
+from sqlalchemy.util import greenlet_spawn
+
+from util.ctx import ctx
+from config.main import local_configs
 
 
 class Team(SQLModel, table=True):
@@ -12,16 +13,19 @@ class Team(SQLModel, table=True):
     name: str = Field(index=True)
     headquarters: str
 
-    heroes: list["Hero"] = Relationship(back_populates="team", passive_deletes="all") #, cascade_delete=True)
+    heroes: list["Hero"] = Relationship(back_populates="team", passive_deletes="all")  # , cascade_delete=True)
 
 
-class Hero(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+class HeroBase(SQLModel):
     name: str = Field(index=True)
     secret_name: str
     age: int | None = Field(default=None, index=True)
 
-    team_id: int | None = Field(default=None, foreign_key="team.id", ondelete="RESTRICT")
+    team_id: int | None = Field(default=None, foreign_key="team.id")
+
+
+class Hero(HeroBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
 
     team: Team | None = Relationship(back_populates="heroes")
 
@@ -37,9 +41,7 @@ async def actions():
         # hero_deadpond = Hero(
         #     name="Deadpond", secret_name="Dive Wilson", team_id=team_z_force.id
         # )
-        hero_deadpond = Hero(
-            name="Deadpond", secret_name="Dive Wilson", team=team_z_force
-        )
+        hero_deadpond = Hero(name="Deadpond", secret_name="Dive Wilson", team=team_z_force)
         hero_rusty_man = Hero(
             name="Rusty-Man",
             secret_name="Tommy Sharp",
@@ -80,11 +82,9 @@ async def actions():
         statement = select(Hero).where(Hero.name == "Deadpond")
         result = await session.execute(statement)
         hero_spider_boy = result.scalars().first()
-        print("Spider-Boy's team again:", hero_spider_boy.team)
+        print("Spider-Boy's team again:", hero_spider_boy.team if hero_spider_boy else "")
 
-        statement = select(Team).where(Team.name == "Preventers").options(
-            selectinload(Team.heroes)
-        )
+        statement = select(Team).where(Team.name == "Preventers").options(selectinload(Team.heroes))  # type: ignore
         result = await session.execute(statement)
         team_preventers = result.scalars().one()
 
@@ -92,12 +92,11 @@ async def actions():
 
         statement = select(Team).where(Team.name == "Preventers")
         team = (await session.execute(statement)).scalars().one()
-        await greenlet_spawn(
-            team.heroes.clear
-        )
+        await greenlet_spawn(team.heroes.clear)
         await session.delete(team)
         await session.commit()
         print("Deleted team:", team)
+
 
 async def create_all():
     async with local_configs.extensions.relation.engine.begin() as conn:

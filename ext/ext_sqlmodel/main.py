@@ -1,14 +1,17 @@
-from contextlib import asynccontextmanager, contextmanager
 import enum
 import datetime
-from functools import cached_property
-from typing import override, Generator, AsyncGenerator
+from typing import AsyncGenerator, override
 from zoneinfo import ZoneInfo
+from functools import cached_property
+from contextlib import asynccontextmanager
 
 from pydantic import MySQLDsn
-from sqlalchemy import Engine
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlmodel import create_engine, Session
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from config.default import InstanceExtensionConfig, RegisterExtensionConfig
 
@@ -35,12 +38,10 @@ class SqlModelConfig(InstanceExtensionConfig[AsyncSession], RegisterExtensionCon
         )
 
     @override
-    async def register(self) -> None:
-        ...
+    async def register(self) -> None: ...
 
     @override
-    async def unregister(self) -> None:
-        ...
+    async def unregister(self) -> None: ...
 
     @property
     @asynccontextmanager
@@ -49,14 +50,13 @@ class SqlModelConfig(InstanceExtensionConfig[AsyncSession], RegisterExtensionCon
         s: AsyncSession | None = None
         try:
             s = self.sessionmaker()
-            yield s
+            yield s  # type: ignore
         finally:
             if s:
                 await s.close()
 
-
     @cached_property
-    def engine(self) -> Engine:
+    def engine(self) -> AsyncEngine:
         return create_async_engine(
             str(self.url),
             echo=self.echo,
@@ -64,11 +64,6 @@ class SqlModelConfig(InstanceExtensionConfig[AsyncSession], RegisterExtensionCon
             pool_size=10,
         )
 
-
     @cached_property
     def sessionmaker(self) -> async_sessionmaker:
-        return async_sessionmaker(
-            bind=self.engine,
-            expire_on_commit=False
-        )
-
+        return async_sessionmaker(bind=self.engine, expire_on_commit=False)

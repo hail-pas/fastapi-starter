@@ -9,12 +9,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from util.ctx import init_ctx, clear_ctx
 from config.main import LocalConfig, local_configs
 from core.logger import LogLevelEnum, setup_loguru
 from core.response import AesResponse
 from config.default import RegisterExtensionConfig
 from enhance.monkey_patch import patch
-from util.ctx import clear_ctx, init_ctx
 
 
 class ApiApplication(FastAPI):
