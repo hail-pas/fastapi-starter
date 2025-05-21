@@ -3,11 +3,13 @@ import uuid
 
 from loguru import logger
 from starlette.types import Message
-from starlette_context import context
+from starlette_context import context, request_cycle_context
 from starlette.requests import Request, HTTPConnection
 from starlette.responses import Response
 from fastapi.middleware.gzip import GZipMiddleware
 from starlette.datastructures import MutableHeaders
+from starlette_context.errors import MiddleWareValidationError
+from starlette.middleware.base import RequestResponseEndpoint
 from starlette.middleware.cors import CORSMiddleware
 from starlette_context.plugins import Plugin
 from starlette_context.middleware import ContextMiddleware
@@ -109,10 +111,37 @@ class RequestProcessInfoPlugin(Plugin):
         logger.info(info_dict)
 
 
+class ContextMiddlewareWithTraceId(ContextMiddleware):
+    """上下文中间件"""
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        try:
+            context = await self.set_context(request)
+        except MiddleWareValidationError as e:
+            error_response = e.error_response or self.error_response
+            return error_response
+
+        # create request-scoped context
+        with (
+            request_cycle_context(context),
+            logger.contextualize(  # add this
+                trace_id=context.get(RequestIdPlugin.key),
+            ),
+        ):
+            # process rest of response stack
+            response = await call_next(request)
+            # gets back to middleware, process response with plugins
+            for plugin in self.plugins:
+                await plugin.enrich_response(response)
+            # return response before resetting context
+            # allowing further middlewares to still use the context
+            return response
+
+
 roster = [
     # >>>>> Middleware Func
     (
-        ContextMiddleware,
+        ContextMiddlewareWithTraceId,
         {
             "plugins": [
                 RequestIdPlugin(),

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 import logging
+import warnings
 import traceback
 from enum import Enum
 from types import FrameType
@@ -30,16 +31,10 @@ class LogLevelEnum(IntEnum):
     NOTSET = (logging.NOTSET, "NOTSET")
 
 
-class ChangeableLoggerName(str, Enum):
+class LoggerNameEnum(str, Enum):
     root = "root"
     fastaapi = "fastapi"
     tortoise = "tortoise"
-
-
-class LoggerNameEnum(str, Enum):
-    root = ChangeableLoggerName.root.value
-    fastaapi = ChangeableLoggerName.fastaapi.value
-    tortoise = ChangeableLoggerName.tortoise.value
     gunicorn_error = "gunicorn.error"
     gunicorn_asgi = "gunicorn.asgi"
     gunicorn_gunicorn = "gunicorn.access"
@@ -102,28 +97,6 @@ def setup_loguru_logging_intercept(
         # mod_logger.propagate = False
 
 
-def serialize(record: loguru.Record) -> dict:
-    """Serialize the JSON log."""
-    log = {}
-    log["level"] = record["level"].name
-    log["time"] = record["time"].strftime("%Y-%m-%d %H:%M:%S %Z %z")
-    log["message"] = record["message"]
-    location = record["name"]
-    log["name"] = location  # type: ignore
-    if record["function"]:
-        location = f'{location}:{record["function"]}'
-    log["location"] = f'{location}:{record["line"]}'
-    log.update(record.get("extra", {}))
-    return log
-
-
-def json_sink(record: loguru.Record) -> None:  # from loguru import Message
-    serialized = serialize(record.record)  # type: ignore
-    if not serialized:
-        return
-    print(serialized)
-
-
 class GunicornLogger(glogging.Logger):
     def __init__(self, cfg: Any) -> None:  # ruff: noqa: ANN401
         super().__init__(cfg)
@@ -138,9 +111,39 @@ class GunicornLogger(glogging.Logger):
         )
 
 
+def edit_record_and_gen_format(record: loguru.Record) -> str:
+    extra = record.get("extra") or {}
+    record["message"] = {"message": record["message"], **extra}
+    if record["level"].no <= 10:
+        # debug
+        level_color = "white"
+    elif record["level"].no <= 20:
+        # info
+        level_color = "blue"
+    elif record["level"].no <= 30:
+        # warning
+        level_color = "yellow"
+    elif record["level"].no <= 40:
+        # error
+        level_color = "red"
+    else:
+        # other
+        level_color = "magenta"
+    if ENVIRONMENT in [EnvironmentEnum.local.value]:
+        format_s = (
+            "<green>[{time:YYYY-MM-DD HH:mm:ss}]</green> | "
+            + f"<{level_color}>"
+            + "<bold>[{level}]</bold>"
+            + f"</{level_color}>"
+            + " | <fg 0,75,0><underline>{name}:{line}</underline> >> {function}</fg 0,75,0> | <cyan>{message}</cyan>\n"
+        )
+        return format_s
+    else:
+        return "[{time:YYYY-MM-DD HH:mm:ss}] | [{level}] | {name}:{line} >> {function} | {message}\n"
+
+
 def setup_loguru(
     level: LogLevelEnum = LogLevelEnum.INFO,
-    sink: TextIO | Callable[[loguru.Record], None] | logging.Handler = json_sink,
 ) -> None:
     # loguru
     logger.remove()
@@ -162,14 +165,14 @@ def setup_loguru(
     #     diagnose=True,
     # )
     logger.add(
-        sink=sink,  # type: ignore
-        format="{message}",  # 日志显示格式
+        sink=sys.stdout,  # type: ignore
+        format=edit_record_and_gen_format,  # 日志显示格式
         level=level,  # 日志级别
         enqueue=True,  # 默认是线程安全的，enqueue=True使得多进程安全
-        serialize=True,
+        serialize=False,
         backtrace=True,
         diagnose=True,
-        colorize=True,
+        colorize=None,
     )
 
     UVICORN_LOGGING_MODULES = (
@@ -201,4 +204,23 @@ def setup_loguru(
     # disable duplicate logging
     logging.getLogger(LoggerNameEnum.root.value).handlers.clear()  # type: ignore
     logging.getLogger("uvicorn").handlers.clear()
+    logging.getLogger("gunicorn").handlers.clear()
     logging.captureWarnings(True)
+
+    logger.debug("debug")
+    logger.info("info")
+    logger.warning("warning")
+    logger.error("error")
+    logger.critical("critical")
+    logger.exception("exception")
+
+
+showwarning_ = warnings.showwarning
+
+
+def showwarning(message, *args, **kwargs):
+    logger.warning(message)
+    showwarning_(message, *args, **kwargs)
+
+
+warnings.showwarning = showwarning
