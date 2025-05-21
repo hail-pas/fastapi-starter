@@ -16,7 +16,7 @@ from pydantic import (
 from fastapi.responses import ORJSONResponse
 from starlette_context import context
 
-from etype.enum import IntEnum
+from core.types import IntEnum, ContextKeyEnum
 from core.schema import Pager, CRUDPager
 from constant.format import DATETIME_FORMAT_STRING
 
@@ -95,15 +95,11 @@ class Resp(BaseModel, Generic[DataT]):
     @classmethod
     def set_trace_id(cls, value: str, info: ValidationInfo) -> str:
         if not value:
-            from core.context import ContextKeyEnum
-
             value = str(context.get(ContextKeyEnum.request_id.value, ""))
         return value
 
     @model_validator(mode="after")
     def set_failed_response(self) -> Self:
-        from core.context import ContextKeyEnum
-
         context[ContextKeyEnum.response_code.value] = self.code
         if self.code != ResponseCodeEnum.success:
             context[ContextKeyEnum.response_data.value] = {

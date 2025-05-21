@@ -9,11 +9,11 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from util.ctx import init_ctx, clear_ctx
 from config.main import LocalConfig, local_configs
+from core.context import init_ctx, clear_ctx
+
 from core.logger import LogLevelEnum, setup_loguru
 from core.response import AesResponse
-from config.default import RegisterExtensionConfig
 from enhance.monkey_patch import patch
 
 
@@ -29,7 +29,7 @@ class ApiApplication(FastAPI):
         setup_loguru(LogLevelEnum.DEBUG if local_configs.project.debug else LogLevelEnum.INFO)
         super().setup()
         self.enable_sentry()
-        # self.enable_static_app()
+        self.enable_static_app()
 
     def enable_sentry(self) -> None:
         if not self.settings.project.sentry_dsn:

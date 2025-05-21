@@ -11,9 +11,9 @@ from tortoise.exceptions import IntegrityError
 from tortoise.expressions import Q
 from tortoise.contrib.pydantic.base import PydanticModel
 
+from core.types import ApiException
 from core.schema import CRUDPager, paginate
 from core.response import Resp
-from core.exception import ApiException
 
 unique_error_msg_key_regex = re.compile(r"'(.*?)'")
 

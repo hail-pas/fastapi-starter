@@ -9,7 +9,7 @@ from traitlets.config import Config
 
 def sync_clear_ctx():
     import asyncio
-    from util.ctx import clear_ctx
+    from core.context import clear_ctx
     loop = asyncio.get_event_loop()
     loop.run_until_complete(clear_ctx())
 

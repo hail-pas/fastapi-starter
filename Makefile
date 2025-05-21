@@ -1,4 +1,4 @@
-DIRS = ./config ./api ./core ./deploy ./enhance ./ext ./util
+DIRS = ./config ./api ./constant ./core ./deploy ./enhance ./ext ./util
 export MYPYPATH=./
 # --disable-warnings
 help:

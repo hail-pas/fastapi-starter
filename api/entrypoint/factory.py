@@ -1,7 +1,7 @@
-from config.main import local_configs
-from api.user_center.factory import user_center_api
-from api.second.factory import second_api
 from core.api import ApiApplication, lifespan
+from config.main import local_configs
+from api.second.factory import second_api
+from api.user_center.factory import user_center_api
 
 
 class RootApi(ApiApplication):

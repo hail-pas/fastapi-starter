@@ -7,10 +7,10 @@
 
 import uuid
 
+from core.types import ApiException
 from config.main import local_configs
 from util.encrypt import PasswordUtil
 from ext.ext_redis import keys
-from core.exception import ApiException
 from ext.ext_tortoise import enums
 from ext.ext_redis.helper import verify_captcha_code
 from api.service.auth.schema import CodeLoginSchema, PasswordLoginSchema

@@ -1,6 +1,5 @@
 import re
 
-
 PHONE_REGEX_CN = re.compile(r"^1[3-9]\d{9}$")
 
 PHONE_REGEX_GLOBAL = re.compile(r"^\+[1-9]\d{1,14}$")

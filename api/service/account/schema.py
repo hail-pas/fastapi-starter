@@ -1,9 +1,9 @@
 from pydantic import Field, BaseModel, field_validator
 from tortoise.contrib.pydantic import pydantic_model_creator
 
+from core.types import ApiException
 from util.encrypt import PasswordUtil
 from constant.regex import PASSWORD_REGEX
-from core.exception import ApiException
 from ext.ext_tortoise import enums
 from enhance.epydantic import as_query, optional
 from api.service.role.schema import RoleList

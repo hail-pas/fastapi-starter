@@ -3,8 +3,8 @@ from datetime import datetime
 
 from pydantic import Field, BaseModel, field_validator, model_validator
 
+from core.types import ApiException
 from constant.regex import PASSWORD_REGEX
-from core.exception import ApiException
 from ext.ext_tortoise.enums import TokenSceneTypeEnum
 from api.service.account.schema import AccountList
 

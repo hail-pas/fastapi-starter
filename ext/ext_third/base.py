@@ -19,9 +19,10 @@ from _socket import gaierror
 from pydantic import BaseModel
 from starlette_context import context
 
-from core.context import RequestIdPlugin, ResponseHeaderKeyEnum
+from core.types import ResponseHeaderKeyEnum
 from util.general import await_in_sync
 from core.response import ResponseCodeEnum
+from core.middleware import RequestIdPlugin
 
 
 def only_alphabetic_numeric(value: str) -> bool:

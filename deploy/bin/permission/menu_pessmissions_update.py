@@ -4,21 +4,21 @@ from uuid import UUID
 
 from loguru import logger
 
-from bin.permission.data import MenuAndPerm
 from core.api import ApiApplication
-from entrypoint.main import import_app
-from ext.ext_tortoise import enums
-from ext.ext_tortoise.models.user_center import Account, Permission, Resource
-from util.ctx import ctx
 from util.route import gte_all_uris
+from core.context import ctx
+from ext.ext_tortoise import enums
+from api.entrypoint.main import import_app
+from deploy.bin.permission.data import MenuAndPerm
+from ext.ext_tortoise.models.user_center import Account, Resource, Permission
 
 sys.path.append(".")  # noqa
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 from starlette.routing import Mount, Route, WebSocketRoute
-from api.depend import token_required, api_permission_check
 
+from api.depend import token_required, api_permission_check
 
 
 def filter_uri(r: Route | WebSocketRoute | Mount) -> bool:
@@ -137,7 +137,6 @@ async def refresh_permissions():
         acc: Account
         logger.info(f"Refreshing permissions for {acc.username}")
         await acc.update_cache_permissions()
-
 
 
 async def main(app_path: str):

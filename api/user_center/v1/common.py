@@ -7,9 +7,9 @@ from pydantic import Field, BaseModel
 from captcha.image import ImageCaptcha, random_color  # type: ignore
 from fastapi.responses import StreamingResponse
 
+from core.types import ApiException
 from core.response import Resp
 from constant.regex import EMAIL_REGEX, PHONE_REGEX_CN
-from core.exception import ApiException
 from ext.ext_tortoise import enums
 from ext.ext_redis.helper import generate_captcha_code
 from ext.ext_tortoise.models.user_center import Account

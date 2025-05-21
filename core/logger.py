@@ -13,7 +13,7 @@ import loguru
 from loguru import logger
 from gunicorn import glogging  # type: ignore
 
-from etype.enum import IntEnum
+from core.types import IntEnum
 from config.default import ENVIRONMENT, EnvironmentEnum
 
 

@@ -5,9 +5,9 @@ from tortoise.queryset import QuerySet
 from tortoise.transactions import in_transaction
 
 from api.depend import api_permission_check
+from core.types import ApiException
 from core.schema import CRUDPager
 from core.response import Resp, PageData
-from core.exception import ApiException
 from ext.ext_tortoise.curd import (
     list_view,
     create_obj,

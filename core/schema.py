@@ -3,7 +3,7 @@ from typing import Callable
 from fastapi import Body, Query
 from pydantic import BaseModel, PositiveInt, conint
 
-from core.exception import ApiException
+from core.types import ApiException
 
 
 class Pager(BaseModel):

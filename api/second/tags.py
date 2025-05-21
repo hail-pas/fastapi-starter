@@ -1,4 +1,4 @@
-from etype.enum import StrEnum
+from core.types import StrEnum
 
 
 class TagsEnum(StrEnum):

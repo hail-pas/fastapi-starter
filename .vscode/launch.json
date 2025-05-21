@@ -9,7 +9,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "entrypoint.factory:service_api",
+                "api.entrypoint.factory:service_api",
                 "--reload",
                 "--host",
                 "0.0.0.0",

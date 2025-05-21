@@ -1,6 +1,6 @@
+from core.types import ApiException
 from config.main import local_configs
 from util.general import generate_random_string
-from core.exception import ApiException
 
 
 async def generate_captcha_code(

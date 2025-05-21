@@ -4,8 +4,8 @@ from sqlmodel import Field, SQLModel, Relationship, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.util import greenlet_spawn
 
-from util.ctx import ctx
 from config.main import local_configs
+from core.context import ctx
 
 
 class Team(SQLModel, table=True):

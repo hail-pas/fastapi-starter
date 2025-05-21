@@ -7,8 +7,8 @@ from config.main import local_configs
 from api.second.v1 import router as v1_router
 from api.second.v2 import router as v2_router
 from core.response import Resp
+from core.exception import handler_roster as exception_handler_roster
 from core.middleware import roster as middleware_roster
-from core.exc_handler import roster as exception_handler_roster
 from ext.ext_tortoise.main import ConnectionNameEnum
 from ext.ext_tortoise.migrate.env import VERSION_FILE_PATH
 
