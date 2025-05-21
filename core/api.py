@@ -1,9 +1,11 @@
 from abc import abstractmethod
 from typing import Self, override
+from asyncio import Event
 from inspect import isclass, isfunction
 from contextlib import asynccontextmanager
 from collections.abc import Callable, AsyncGenerator
 
+import anyio
 from fastapi import FastAPI, APIRouter
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,10 +13,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from config.main import LocalConfig, local_configs
 from core.context import init_ctx, clear_ctx
-
-from core.logger import LogLevelEnum, setup_loguru
 from core.response import AesResponse
-from enhance.monkey_patch import patch
 
 
 class ApiApplication(FastAPI):
@@ -25,8 +24,6 @@ class ApiApplication(FastAPI):
     def setup(self) -> None:
         self.code = self.extra["code"]
         self.settings = local_configs
-        patch()
-        setup_loguru(LogLevelEnum.DEBUG if local_configs.project.debug else LogLevelEnum.INFO)
         super().setup()
         self.enable_sentry()
         self.enable_static_app()
@@ -96,10 +93,22 @@ class ApiApplication(FastAPI):
         raise NotImplementedError
 
 
+async def set_threadpool_tokens(number_of_tokens: int = 100) -> None:
+    limiter = anyio.to_thread.current_default_thread_limiter()
+    limiter.total_tokens = number_of_tokens
+
+
 @asynccontextmanager
 async def lifespan(api: ApiApplication) -> AsyncGenerator:
-    await init_ctx()
+    initialization_complete = Event()
+    api.state.initialization_complete = initialization_complete
 
-    yield
+    await set_threadpool_tokens()
 
-    await clear_ctx()
+    try:
+        await init_ctx()
+        initialization_complete.set()
+
+        yield
+    finally:
+        await clear_ctx()
