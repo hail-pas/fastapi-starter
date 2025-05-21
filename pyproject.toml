@@ -31,6 +31,7 @@ dependencies = [
     "python-ulid==3.0.0",
     "captcha==0.6.0",
     "pyinstrument==5.0.0",
+    "alembic>=1.15.2",
 ]
 
 [project.optional-dependencies]
