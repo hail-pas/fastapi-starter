@@ -1,17 +1,15 @@
 import asyncio
-import logging
+import pkgutil
+import importlib
 from logging.config import fileConfig
-import re
 
-from sqlalchemy import Connection, engine_from_config
-from sqlalchemy import pool
-
+from loguru import logger
 from alembic import context
-from ext.ext_sqlmodel.models.user_center import UserCenterBase
-from ext.ext_sqlmodel.models.second import SecondBase
-from config.main import local_configs
+from sqlalchemy import MetaData, Connection
 
-USE_TWOPHASE = False
+from config.main import local_configs
+from ext.ext_sqlmodel.models.second import SecondBase
+from ext.ext_sqlmodel.models.user_center import UserCenterBase
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -21,37 +19,38 @@ config = context.config
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-logger = logging.getLogger("alembic.env")
 
-# gather section names referring to different
-# databases.  These are named "engine1", "engine2"
-# in the sample .ini file.
-config.set_main_option("databases", "user_center,second,two")
-db_names = config.get_main_option("databases", "user_center,second,two")
+# config.set_section_option("user_center", "sqlalchemy.url", str(local_configs.extensions.rdb_user_center.url))
+# # config.set_section_option("second", "sqlalchemy.url", str(local_configs.extensions.rdb_second.url))
 
-config.set_section_option("user_center", "sqlalchemy.url", str(local_configs.extensions.rdb_user_center.url))
-config.set_section_option("second", "sqlalchemy.url", str(local_configs.extensions.rdb_second.url))
 
-# add your model's MetaData objects here
-# for 'autogenerate' support.  These must be set
-# up to hold just those tables targeting a
-# particular database. table.tometadata() may be
-# helpful here in case a "copy" of
-# a MetaData is needed.
-# from myapp import mymodel
-# target_metadata = {
-#       'engine1':mymodel.metadata1,
-#       'engine2':mymodel.metadata2
-# }
-target_metadata = {
-    "user_center": UserCenterBase.metadata,
-    "second": SecondBase.metadata,
-}
+def import_models(package_name):
+    package = importlib.import_module(package_name)
+    for _, module_name, _ in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+        importlib.import_module(module_name)
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+
+# Load all models dynamically
+import_models("ext.ext_sqlmodel.models")
+
+# db_names = config.set_main_option("databases", "user_center,second")
+
+databases = [
+    (
+        "user_center",
+        local_configs.extensions.rdb_user_center.url,
+        local_configs.extensions.rdb_user_center.engine,
+        UserCenterBase.metadata,
+    ),
+    (
+        "second",
+        local_configs.extensions.rdb_second.url,
+        local_configs.extensions.rdb_second.engine,
+        SecondBase.metadata,
+    ),
+]
+
+# target_metadata = [UserCenterBase.metadata, SecondBase.metadata]
 
 
 def run_migrations_offline() -> None:
@@ -66,121 +65,45 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    # for the --sql use case, run migrations for each URL into
-    # individual files.
-
-    engines = {}
-    for name in re.split(r",\s*", db_names):
-        engines[name] = rec = {}
-        rec["url"] = context.config.get_section_option(name, "sqlalchemy.url")
-
-    for name, rec in engines.items():
+    for name, url, _, metadata in databases:
+        print("url is %s" % url)
+        logger.info("url is %s" % url)
         logger.info("Migrating database %s" % name)
         file_ = "%s.sql" % name
         logger.info("Writing output to %s" % file_)
         with open(file_, "w") as buffer:
             context.configure(
-                url=rec["url"],
-                output_buffer=buffer,
-                target_metadata=target_metadata.get(name),
+                url=str(url),
+                target_metadata=metadata,
                 literal_binds=True,
                 dialect_opts={"paramstyle": "named"},
             )
+
             with context.begin_transaction():
                 context.run_migrations(engine_name=name)
 
 
-def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
-
-    # for the direct-to-DB use case, start a transaction on all
-    # engines, then run all migrations, then commit all transactions.
-
-    engines = {}
-    for name in re.split(r",\s*", db_names):
-        engines[name] = rec = {}
-        rec["engine"] = engine_from_config(
-            context.config.get_section(name, {}),
-            prefix="sqlalchemy.",
-            poolclass=pool.NullPool,
-        )
-
-    for name, rec in engines.items():
-        engine = rec["engine"]
-        rec["connection"] = conn = engine.connect()
-
-        if USE_TWOPHASE:
-            rec["transaction"] = conn.begin_twophase()
-        else:
-            rec["transaction"] = conn.begin()
-
-    try:
-        for name, rec in engines.items():
-            logger.info("Migrating database %s" % name)
-            context.configure(
-                connection=rec["connection"],
-                upgrade_token="%s_upgrades" % name,
-                downgrade_token="%s_downgrades" % name,
-                target_metadata=target_metadata.get(name),
-            )
-            context.run_migrations(engine_name=name)
-
-        if USE_TWOPHASE:
-            for rec in engines.values():
-                rec["transaction"].prepare()
-
-        for rec in engines.values():
-            rec["transaction"].commit()
-    except:
-        for rec in engines.values():
-            rec["transaction"].rollback()
-        raise
-    finally:
-        for rec in engines.values():
-            rec["connection"].close()
-
-
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
-
-
-
-def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
-    """
-    url = config.get_main_option("sqlalchemy.url")
+def do_run_migrations(connection: Connection, name: str, metadata: MetaData) -> None:
+    logger.info("Migrating database %s" % name)
+    logger.info("metadata is %s" % metadata)
+    logger.info("tables: %s" % metadata.sorted_tables)
     context.configure(
-        url=url,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
+        connection=connection,
+        target_metadata=metadata,
+        #! upgrade/downgrade token, 不修改这个会导致 upgrade/downgrade template获取不到内容
+        upgrade_token=f"{name}_upgrades",
+        downgrade_token=f"{name}_downgrades",
+        transactional_ddl=True,
+        transaction_per_migration=True,
+    )
+    logger.info("head revision %s" % context.get_head_revision())
+    ret = connection.execute(
+        "select version_num from alembic_version"
     )
 
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
-
-    with context.begin_transaction():
-        context.run_migrations()
+    with connection.begin():
+        context.run_migrations(engine_name=name)
+    logger.info("Migrated database %s success" % name)
 
 
 async def run_async_migrations() -> None:
@@ -188,19 +111,25 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
+    for name, _, engine, metadata in databases:
+        async with engine.connect() as connection:
 
-    connectable = local_configs.extensions.rdb_user_center.engine
+            await connection.run_sync(do_run_migrations, name, metadata)
 
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
-
-    await connectable.dispose()
+        # await engine.dispose()
 
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-
-    asyncio.run(run_async_migrations())
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    if loop and loop.is_running():
+        asyncio.create_task(run_async_migrations())
+    else:
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(run_async_migrations())
 
 
 if context.is_offline_mode():

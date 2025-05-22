@@ -1,5 +1,5 @@
-from sqlalchemy.orm import registry
 from sqlmodel import Field, SQLModel
+from sqlalchemy.orm import registry
 
 
 class UserCenterBase(SQLModel, registry=registry()):

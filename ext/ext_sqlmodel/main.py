@@ -1,3 +1,5 @@
+import asyncio
+from asyncio import subprocess
 import enum
 import datetime
 from typing import AsyncGenerator, override
@@ -5,15 +7,18 @@ from zoneinfo import ZoneInfo
 from functools import cached_property
 from contextlib import asynccontextmanager
 
+from alembic import command
 from pydantic import MySQLDsn
+from alembic.config import Config
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.util import greenlet_spawn
 
-from config.default import InstanceExtensionConfig, RegisterExtensionConfig
+from config.default import BASE_DIR, InstanceExtensionConfig, RegisterExtensionConfig
 
 
 class ConnectionNameEnum(str, enum.Enum):
@@ -26,19 +31,28 @@ class ConnectionNameEnum(str, enum.Enum):
 
 class SqlModelConfig(InstanceExtensionConfig[AsyncSession], RegisterExtensionConfig):
     url: MySQLDsn
-    timezone: str = "Asia/Shanghai"
-    echo: bool = True
+    echo: bool = False
 
     # model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @property
     def datetime_now(self) -> datetime.datetime:
+        from config.main import local_configs
         return datetime.datetime.now(
-            tz=ZoneInfo(self.timezone),
+            tz=ZoneInfo(local_configs.server.timezone),
         )
 
     @override
-    async def register(self) -> None: ...
+    async def register(self) -> None:
+        # 直接使用代码无法执行成功
+        # alembic_cfg = Config(
+        #     f"{BASE_DIR}/ext/ext_sqlmodel/alembic.ini",
+        #     attributes={"script_location": f"{BASE_DIR}/ext/ext_sqlmodel/migration"},
+        # )
+        # command.upgrade(alembic_cfg, "head")
+        # 重复执行会有问题
+        # await subprocess.create_subprocess_shell(f"alembic --config {BASE_DIR}/ext/ext_sqlmodel/alembic.ini upgrade head")
+        pass
 
     @override
     async def unregister(self) -> None: ...

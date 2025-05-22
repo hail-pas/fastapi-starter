@@ -31,7 +31,7 @@ class Hero(HeroBase, table=True):
 
 
 async def actions():
-    async with local_configs.extensions.relation.instance as session:
+    async with local_configs.extensions.rdb_user_center.instance as session:
         team_preventers = Team(name="Preventers", headquarters="Sharp Tower")
         team_z_force = Team(name="Z-Force", headquarters="Sister Margaret's Bar")
         session.add(team_preventers)
@@ -99,7 +99,7 @@ async def actions():
 
 
 async def create_all():
-    async with local_configs.extensions.relation.engine.begin() as conn:
+    async with local_configs.extensions.rdb_user_center.engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
         await conn.run_sync(SQLModel.metadata.create_all)
 
