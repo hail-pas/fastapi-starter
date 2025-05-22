@@ -1,7 +1,5 @@
 from typing import Literal
 
-from aerich import Command
-
 from core.api import ApiApplication, lifespan
 from config.main import local_configs
 from api.second.v1 import router as v1_router
@@ -9,22 +7,8 @@ from api.second.v2 import router as v2_router
 from core.response import Resp
 from core.exception import handler_roster as exception_handler_roster
 from core.middleware import roster as middleware_roster
-from ext.ext_tortoise.main import ConnectionNameEnum
-from ext.ext_tortoise.migrate.env import VERSION_FILE_PATH
 
-
-class ExampleApi(ApiApplication):
-    async def before_server_start(self) -> None:
-        command = Command(
-            tortoise_config=self.settings.extensions.relation.to_dict(),
-            app=ConnectionNameEnum.second.value,
-            location=VERSION_FILE_PATH,
-        )
-        await command.init()
-        await command.upgrade(run_in_transaction=True)
-
-
-second_api = ExampleApi(
+second_api = ApiApplication(
     code="Example",
     settings=local_configs,
     title="Example",

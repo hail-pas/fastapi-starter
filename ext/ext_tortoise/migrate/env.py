@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from config.main import local_configs
+from ext.ext_tortoise.main import gen_tortoise_config_dict
 
-TORTOISE_ORM_CONFIG = local_configs.extensions.relation.to_dict()
+TORTOISE_ORM_CONFIG = gen_tortoise_config_dict()
+
 
 VERSION_FILE_PATH = str(Path(__file__).resolve().parent.absolute())
 

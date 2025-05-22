@@ -69,6 +69,7 @@ class ServerConfig(BaseModel):
     redoc_uri: str = "/redoc"
     openapi_uri: str = "/openapi.json"
     token_expire_seconds: int = 3600 * 24
+    timezone: str = "Asia/Shanghai"
 
     class SwaggerServerConfig(BaseModel):
         url: HttpUrl

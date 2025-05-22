@@ -25,8 +25,8 @@ class ApiApplication(FastAPI):
         self.code = self.extra["code"]
         self.settings = local_configs
         super().setup()
-        self.enable_sentry()
-        self.enable_static_app()
+        # self.enable_sentry()
+        # self.enable_static_app()
 
     def enable_sentry(self) -> None:
         if not self.settings.project.sentry_dsn:
@@ -86,11 +86,6 @@ class ApiApplication(FastAPI):
     ) -> None:
         for exc, handler in roster:
             self.add_exception_handler(exc, handler)  # type: ignore
-
-    @abstractmethod
-    async def before_server_start(self) -> None:
-        # 生产环境启动前执行代码, 如数据库迁移等
-        raise NotImplementedError
 
 
 async def set_threadpool_tokens(number_of_tokens: int = 100) -> None:

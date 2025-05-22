@@ -4,7 +4,7 @@ from typing import override
 from zoneinfo import ZoneInfo
 from urllib.parse import unquote
 
-from fastapi import FastAPI
+from aerich import Command
 from pydantic import MySQLDsn
 from tortoise import Tortoise
 
@@ -20,92 +20,87 @@ class ConnectionNameEnum(str, enum.Enum):
 
 
 class TortoiseConfig(RegisterExtensionConfig):
-    user_center: MySQLDsn
-    second: MySQLDsn
-    timezone: str = "Asia/Shanghai"
+    url: MySQLDsn
     echo: bool = False
 
     # model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @property
     def datetime_now(self) -> datetime.datetime:
+        from config.main import local_configs
         return datetime.datetime.now(
-            tz=ZoneInfo(self.timezone),
+            tz=ZoneInfo(local_configs.server.timezone),
         )
 
-    def to_dict(self) -> dict:
+    def config_dict(self) -> dict:
         return {
-            "connections": {
-                ConnectionNameEnum.user_center.value: {
-                    # "engine": "tortoise.backends.sqlite",
-                    # "credentials": {"file_path": ":memory:"},
-                    "engine": "tortoise.backends.mysql",
-                    "credentials": {
-                        "host": self.user_center.host,
-                        "port": self.user_center.port,
-                        "user": self.user_center.username,
-                        "password": unquote(self.user_center.password) if self.user_center.password else "",
-                        "database": self.user_center.path.strip("/"),  # type: ignore
-                        "echo": self.echo,
-                        "minsize": 1,  # 连接池的最小连接数
-                        "maxsize": 10,  # 连接池的最大连接数
-                        "pool_recycle": 3600,  # 连接的最大存活时间（秒）
-                    },
-                },
-                ConnectionNameEnum.second.value: {
-                    # "engine": "tortoise.backends.sqlite",
-                    # "credentials": {"file_path": ":memory:"},
-                    "engine": "tortoise.backends.mysql",
-                    "credentials": {
-                        "host": self.second.host,
-                        "port": self.second.port,
-                        "user": self.second.username,
-                        "password": unquote(self.second.password) if self.second.password else "",
-                        "database": self.second.path.strip("/"),  # type: ignore
-                        "echo": self.echo,
-                        "minsize": 1,  # 连接池的最小连接数
-                        "maxsize": 10,  # 连接池的最大连接数
-                        "pool_recycle": 3600,  # 连接的最大存活时间（秒）
-                    },
-                },
+            # "engine": "tortoise.backends.sqlite",
+            # "credentials": {"file_path": ":memory:"},
+            "engine": "tortoise.backends.mysql",
+            "credentials": {
+                "host": self.url.host,
+                "port": self.url.port,
+                "user": self.url.username,
+                "password": unquote(self.url.password) if self.url.password else "",
+                "database": self.url.path.strip("/"),  # type: ignore
+                "echo": self.echo,
+                "minsize": 1,  # 连接池的最小连接数
+                "maxsize": 10,  # 连接池的最大连接数
+                "pool_recycle": 3600,  # 连接的最大存活时间（秒）
             },
-            "apps": {
-                ConnectionNameEnum.user_center.value: {
-                    "models": [
-                        "aerich.models",
-                        "ext.ext_tortoise.models.user_center",
-                    ],
-                    "default_connection": ConnectionNameEnum.user_center.value,
-                },
-                ConnectionNameEnum.second.value: {
-                    "models": [
-                        "ext.ext_tortoise.models.second",
-                    ],
-                    "default_connection": ConnectionNameEnum.second.value,
-                },
-            },
-            # "use_tz": True,   # Will Always Use UTC as Default Timezone
-            "timezone": self.timezone,
-            # 'routers': ['path.router1', 'path.router2'],
         }
 
     @override
     async def register(self) -> None:
-        Tortoise.init_models(
-            [
-                "ext.ext_tortoise.models.user_center",
-            ],
-            ConnectionNameEnum.user_center.value,
-        )
+        from ext.ext_tortoise.migrate.env import VERSION_FILE_PATH
 
-        Tortoise.init_models(
-            [
-                "ext.ext_tortoise.models.second",
-            ],
-            ConnectionNameEnum.second.value,
-        )
-        await Tortoise.init(config=self.to_dict())
+        for c in ConnectionNameEnum:
+            Tortoise.init_models(
+                [
+                    f"ext.ext_tortoise.models.{c.value}",
+                ],
+                c.value,
+            )
+
+        for c in ConnectionNameEnum:
+            command = Command(
+                tortoise_config=gen_tortoise_config_dict(),
+                app=c.value,
+                location=VERSION_FILE_PATH,
+            )
+            await command.init()
+            await command.upgrade(run_in_transaction=True)
+        await Tortoise.init(config=gen_tortoise_config_dict())
 
     @override
     async def unregister(self) -> None:
         await Tortoise.close_connections()
+
+
+def gen_tortoise_config_dict() -> dict:
+    from config.main import local_configs
+
+    return {
+        "connections": {
+            k.value: getattr(local_configs.extensions, f"rdb_{k.value}").config_dict() for k in ConnectionNameEnum
+        },
+        "apps": {
+            k.value: {
+                "models": (
+                    [
+                        f"ext.ext_tortoise.models.{k.value}",
+                    ]
+                    + [
+                        "aerich.models",
+                    ]
+                    if k.value == ConnectionNameEnum.user_center.value
+                    else []
+                ),
+                "default_connection": k.value,
+            }
+            for k in ConnectionNameEnum
+        },
+        # "use_tz": True,   # Will Always Use UTC as Default Timezone
+        "timezone": local_configs.server.timezone,
+        # 'routers': ['path.router1', 'path.router2'],
+    }
