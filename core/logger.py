@@ -113,7 +113,7 @@ class GunicornLogger(glogging.Logger):
 
 def edit_record_and_gen_format(record: loguru.Record) -> str:
     extra = record.get("extra") or {}
-    record["message"] = {"message": record["message"], **extra}
+    record["message"] = {"message": record["message"], **extra}  # type: ignore
     if record["level"].no <= 10:
         # debug
         level_color = "white"
@@ -205,14 +205,7 @@ def setup_loguru(
     logging.getLogger(LoggerNameEnum.root.value).handlers.clear()  # type: ignore
     logging.getLogger("uvicorn").handlers.clear()
     logging.getLogger("gunicorn").handlers.clear()
-    logging.captureWarnings(True)
-
-    logger.debug("debug")
-    logger.info("info")
-    logger.warning("warning")
-    logger.error("error")
-    logger.critical("critical")
-    logger.exception("exception")
+    # logging.captureWarnings(True)
 
 
 showwarning_ = warnings.showwarning

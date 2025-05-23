@@ -1,7 +1,7 @@
-
 import enum
 import datetime
 from typing import AsyncGenerator, override
+from asyncio import subprocess
 from zoneinfo import ZoneInfo
 from functools import cached_property
 from contextlib import asynccontextmanager
@@ -36,6 +36,7 @@ class SqlModelConfig(InstanceExtensionConfig[AsyncSession], RegisterExtensionCon
     @property
     def datetime_now(self) -> datetime.datetime:
         from config.main import local_configs
+
         return datetime.datetime.now(
             tz=ZoneInfo(local_configs.server.timezone),
         )
@@ -43,14 +44,15 @@ class SqlModelConfig(InstanceExtensionConfig[AsyncSession], RegisterExtensionCon
     @override
     async def register(self) -> None:
         # 直接使用代码无法执行成功
-        alembic_cfg = Config(
-            f"{BASE_DIR}/ext/ext_sqlmodel/alembic.ini",
-            attributes={"script_location": f"{BASE_DIR}/ext/ext_sqlmodel/migration"},
+        # alembic_cfg = Config(
+        #     f"{BASE_DIR}/ext/ext_sqlmodel/alembic.ini",
+        #     attributes={"script_location": f"{BASE_DIR}/ext/ext_sqlmodel/migration"},
+        # )
+        # command.upgrade(alembic_cfg, "head")
+        proc = await subprocess.create_subprocess_shell(
+            f"alembic --config {BASE_DIR}/ext/ext_sqlmodel/alembic.ini upgrade head"
         )
-        command.upgrade(alembic_cfg, "head")
-        # 重复执行会有问题
-        # await subprocess.create_subprocess_shell(f"alembic --config {BASE_DIR}/ext/ext_sqlmodel/alembic.ini upgrade head")
-        pass
+        await proc.communicate()
 
     @override
     async def unregister(self) -> None: ...

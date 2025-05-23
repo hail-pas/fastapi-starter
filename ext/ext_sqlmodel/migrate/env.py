@@ -86,8 +86,8 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection: Connection, name: str, metadata: MetaData) -> None:
     logger.info("Migrating database %s" % name)
-    logger.info("metadata is %s" % metadata)
-    logger.info("tables: %s" % metadata.sorted_tables)
+    # logger.info("metadata is %s" % metadata)
+    # logger.info("tables: %s" % metadata.sorted_tables)
     context.configure(
         connection=connection,
         target_metadata=metadata,
@@ -98,9 +98,6 @@ def do_run_migrations(connection: Connection, name: str, metadata: MetaData) -> 
         transaction_per_migration=True,
     )
     logger.info("head revision %s" % context.get_head_revision())
-    ret = connection.execute(
-        "select version_num from alembic_version"
-    )
 
     with connection.begin():
         context.run_migrations(engine_name=name)

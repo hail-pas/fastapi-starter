@@ -9,6 +9,7 @@ from fastapi.responses import StreamingResponse
 
 from core.types import ApiException
 from core.response import Resp
+from ext.ext_redis import keys
 from constant.regex import EMAIL_REGEX, PHONE_REGEX_CN
 from ext.ext_tortoise import enums
 from ext.ext_redis.helper import generate_captcha_code

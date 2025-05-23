@@ -15,5 +15,5 @@ alembic's config, and an `sqlalchemy.url` provided for each engine name.
 # steps
 1. alembic init --template multidb ./migrate
 2. 修改 alembic.ini, env.py, script.py.mako
-3. alembic --config .\ext\ext_sqlmodel\alembic.ini revision --autogenerate
-4. 
+3. alembic --config ./ext/ext_sqlmodel/alembic.ini revision --autogenerate -m "message"
+4. alembic --config ./ext/ext_sqlmodel/alembic.ini upgrade head

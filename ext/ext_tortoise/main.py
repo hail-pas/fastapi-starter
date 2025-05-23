@@ -28,6 +28,7 @@ class TortoiseConfig(RegisterExtensionConfig):
     @property
     def datetime_now(self) -> datetime.datetime:
         from config.main import local_configs
+
         return datetime.datetime.now(
             tz=ZoneInfo(local_configs.server.timezone),
         )
