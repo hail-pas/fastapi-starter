@@ -1,5 +1,4 @@
-import asyncio
-from asyncio import subprocess
+
 import enum
 import datetime
 from typing import AsyncGenerator, override
@@ -16,7 +15,6 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.util import greenlet_spawn
 
 from config.default import BASE_DIR, InstanceExtensionConfig, RegisterExtensionConfig
 
@@ -45,11 +43,11 @@ class SqlModelConfig(InstanceExtensionConfig[AsyncSession], RegisterExtensionCon
     @override
     async def register(self) -> None:
         # 直接使用代码无法执行成功
-        # alembic_cfg = Config(
-        #     f"{BASE_DIR}/ext/ext_sqlmodel/alembic.ini",
-        #     attributes={"script_location": f"{BASE_DIR}/ext/ext_sqlmodel/migration"},
-        # )
-        # command.upgrade(alembic_cfg, "head")
+        alembic_cfg = Config(
+            f"{BASE_DIR}/ext/ext_sqlmodel/alembic.ini",
+            attributes={"script_location": f"{BASE_DIR}/ext/ext_sqlmodel/migration"},
+        )
+        command.upgrade(alembic_cfg, "head")
         # 重复执行会有问题
         # await subprocess.create_subprocess_shell(f"alembic --config {BASE_DIR}/ext/ext_sqlmodel/alembic.ini upgrade head")
         pass

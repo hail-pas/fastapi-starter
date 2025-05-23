@@ -13,6 +13,7 @@ from ext.ext_sqlmodel.models.user_center import UserCenterBase
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
+
 config = context.config
 
 # Interpret the config file for Python logging.
@@ -111,9 +112,15 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
+    # current_head_revision = context.get_head_revision()
+    # logger.info("current head revision %s" % current_head_revision)
     for name, _, engine, metadata in databases:
         async with engine.connect() as connection:
-
+            # the_raw_aiodbc_connection = (await connection.get_raw_connection()).driver_connection
+            # async with the_raw_aiodbc_connection.cursor() as cursor:
+            #     await cursor.execute("SELECT @@version")
+            #     row = await cursor.fetchone()
+            #     logger.info("SQL Server version: %s" % row[0])
             await connection.run_sync(do_run_migrations, name, metadata)
 
         # await engine.dispose()
