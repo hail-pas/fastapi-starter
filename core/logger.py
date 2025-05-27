@@ -208,7 +208,9 @@ def setup_loguru(
     # capture warning
     logging.captureWarnings(True)
     showwarning_ = warnings.showwarning
+
     def showwarning(message, *args, **kwargs):
         logger.warning(message)
         showwarning_(message, *args, **kwargs)
+
     warnings.showwarning = showwarning
