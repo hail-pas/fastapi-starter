@@ -205,15 +205,10 @@ def setup_loguru(
     logging.getLogger(LoggerNameEnum.root.value).handlers.clear()  # type: ignore
     logging.getLogger("uvicorn").handlers.clear()
     logging.getLogger("gunicorn").handlers.clear()
-    # logging.captureWarnings(True)
-
-
-showwarning_ = warnings.showwarning
-
-
-def showwarning(message, *args, **kwargs):
-    logger.warning(message)
-    showwarning_(message, *args, **kwargs)
-
-
-warnings.showwarning = showwarning
+    # capture warning
+    logging.captureWarnings(True)
+    showwarning_ = warnings.showwarning
+    def showwarning(message, *args, **kwargs):
+        logger.warning(message)
+        showwarning_(message, *args, **kwargs)
+    warnings.showwarning = showwarning
