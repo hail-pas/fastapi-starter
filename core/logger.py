@@ -113,7 +113,7 @@ class GunicornLogger(glogging.Logger):
 
 def edit_record_and_gen_format(record: loguru.Record) -> str:
     extra = record.get("extra") or {}
-    record["message"] = {"message": record["message"], **extra}  # type: ignore
+    # record["message"] = {"message": record["message"], **extra}  # type: ignore
     if record["level"].no <= 10:
         # debug
         level_color = "white"
@@ -137,9 +137,13 @@ def edit_record_and_gen_format(record: loguru.Record) -> str:
             + f"</{level_color}>"
             + " | <fg 0,75,0><underline>{name}:{line}</underline> >> {function}</fg 0,75,0> | <cyan>{message}</cyan>\n"
         )
-        return format_s
     else:
-        return "[{time:YYYY-MM-DD HH:mm:ss}] | [{level}] | {name}:{line} >> {function} | {message}\n"
+        format_s = "[{time:YYYY-MM-DD HH:mm:ss}] | [{level}] | {name}:{line} >> {function} | {message}\n"
+
+    if extra:
+            format_s += " | " + "{extra}"
+
+    return format_s + "\n"
 
 
 def setup_loguru(
