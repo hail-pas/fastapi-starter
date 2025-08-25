@@ -18,6 +18,9 @@ dependencies = [
     "bcrypt==4.3.0",
     "gunicorn==23.0.0",
     "uvicorn[standard]==0.34.2",
+
+    "uvloop==0.21.0; sys_platform == 'linux'",  # uvicorn
+    "httptools>=0.6.4",    # uvicorn
     # sqlmodel
     # "sqlmodel==0.0.24",
     # "alembic=1.15.2",
